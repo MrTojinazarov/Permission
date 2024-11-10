@@ -2,22 +2,50 @@
 
 namespace Database\Seeders;
 
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
+    
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $name = 'Admin';
+        $email = 'admin@gmail.com';
+        $password = Hash::make('admin');
+    
+        $admin = User::create([
+            'name' => $name,
+            'email' => $email,
+            'password' => $password,
         ]);
+
+        $role = Role::create(['name' => 'admin']);
+    
+        $admin->roles()->attach($role);
+
+        $routes = Route::getRoutes();
+
+        foreach($routes as $route){
+
+            $key = $route->getName();
+
+            if($key && !str_starts_with($key, 'generated::') && $key !== 'storage.local'){
+
+                $name = ucfirst(str_replace('.', '-', $key));
+
+                Permission::create([
+                    'key' => $key,
+                    'name' => $name,
+                ]);
+            }
+        }
+        $permissions = Permission::pluck('id')->toArray();
+        $role->permissions()->attach($permissions); 
+
     }
 }
